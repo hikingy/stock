@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A 股交易界面 Demo - KLineChart Pro</title>
+  <link rel="stylesheet" href="https://unpkg.com/k-chart-pro@0.2.1/dist/klinecharts-pro.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background-color: #0a0a0f;
+      color: #ffffff;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-bottom: 1px solid #2a2a3a;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: bold;
+      color: #1677ff;
+    }
+
+    .market-selector {
+      display: flex;
+      gap: 8px;
+    }
+
+    .market-btn {
+      padding: 6px 16px;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: #888;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .market-btn.active {
+      background: #1677ff;
+      color: #fff;
+    }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: #1e1e2e;
+      border-radius: 20px;
+      padding: 6px 16px;
+      border: 1px solid #2a2a3a;
+    }
+
+    .search-box input {
+      border: none;
+      background: transparent;
+      color: #fff;
+      padding: 4px 8px;
+      outline: none;
+      font-size: 14px;
+      width: 200px;
+    }
+
+    .search-box input::placeholder {
+      color: #666;
+    }
+
+    .search-btn {
+      background: #1677ff;
+      border: none;
+      color: #fff;
+      padding: 6px 16px;
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1677ff, #722ed1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .left-panel {
+      width: 280px;
+      background: #12121a;
+      border-right: 1px solid #2a2a3a;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 12px 16px;
+      font-size: 16px;
+      font-weight: bold;
+      border-bottom: 1px solid #2a2a3a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stock-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .stock-item {
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-bottom: 4px;
+    }
+
+    .stock-item:hover {
+      background: #1a1a2e;
+    }
+
+    .stock-item.active {
+      background: #1677ff20;
+      border-left: 3px solid #1677ff;
+    }
+
+    .stock-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stock-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .stock-code {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .stock-price {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .stock-change {
+      font-size: 12px;
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    .change-up {
+      color: #ef5350;
+    }
+
+    .change-down {
+      color: #26a69a;
+    }
+
+    .center-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .stock-detail {
+      padding: 12px 16px;
+      background: #12121a;
+      border-bottom: 1px solid #2a2a3a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .detail-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .detail-name {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .detail-code {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .detail-right {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+    }
+
+    .current-price {
+      font-size: 32px;
+      font-weight: bold;
+    }
+
+    .price-up {
+      color: #ef5350;
+    }
+
+    .price-down {
+      color: #26a69a;
+    }
+
+    .price-change {
+      font-size: 16px;
+    }
+
+    .chart-container {
+      flex: 1;
+      min-height: 0;
+    }
+
+    .right-panel {
+      width: 320px;
+      background: #12121a;
+      border-left: 1px solid #2a2a3a;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .trade-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+    }
+
+    .trade-tabs {
+      display: flex;
+      background: #1e1e2e;
+      border-radius: 6px;
+      padding: 4px;
+      margin-bottom: 16px;
+    }
+
+    .trade-tab {
+      flex: 1;
+      padding: 8px;
+      text-align: center;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #888;
+      transition: all 0.3s;
+    }
+
+    .trade-tab.active {
+      background: #1677ff;
+      color: #fff;
+    }
+
+    .trade-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group label {
+      font-size: 13px;
+      color: #888;
+    }
+
+    .form-group input {
+      background: #1e1e2e;
+      border: 1px solid #2a2a3a;
+      border-radius: 4px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border-color: #1677ff;
+    }
+
+    .price-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .quantity-selector {
+      display: flex;
+      gap: 8px;
+    }
+
+    .qty-btn {
+      flex: 1;
+      padding: 6px;
+      background: #1e1e2e;
+      border: 1px solid #2a2a3a;
+      border-radius: 4px;
+      color: #888;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .qty-btn:hover {
+      background: #2a2a3a;
+    }
+
+    .qty-btn.active {
+      background: #1677ff;
+      border-color: #1677ff;
+      color: #fff;
+    }
+
+    .trade-btn {
+      padding: 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .buy-btn {
+      background: linear-gradient(135deg, #ef5350, #e53935);
+      color: #fff;
+    }
+
+    .sell-btn {
+      background: linear-gradient(135deg, #26a69a, #00897b);
+      color: #fff;
+    }
+
+    .trade-btn:hover {
+      opacity: 0.9;
+    }
+
+    .position-info {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid #2a2a3a;
+    }
+
+    .position-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 13px;
+    }
+
+    .position-label {
+      color: #888;
+    }
+
+    .position-value {
+      font-weight: 500;
+    }
+
+    .footer {
+      padding: 8px 20px;
+      background: #12121a;
+      border-top: 1px solid #2a2a3a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .market-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #26a69a;
+    }
+
+    .status-dot.closed {
+      background: #666;
+    }
+
+    .scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .scrollbar::-webkit-scrollbar-track {
+      background: #12121a;
+    }
+
+    .scrollbar::-webkit-scrollbar-thumb {
+      background: #2a2a3a;
+      border-radius: 2px;
+    }
+
+    .scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #3a3a4a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">📈 A股交易</div>
+        <div class="market-selector">
+          <button class="market-btn active" data-market="SH">沪市</button>
+          <button class="market-btn" data-market="SZ">深市</button>
+          <button class="market-btn" data-market="BJ">北交所</button>
+        </div>
+      </div>
+      <div class="header-center">
+        <div class="search-box">
+          <input type="text" placeholder="输入股票代码或名称" id="stock-search">
+        </div>
+        <button class="search-btn" id="search-btn">搜索</button>
+      </div>
+      <div class="header-right">
+        <div class="user-info">
+          <div class="user-avatar">U</div>
+          <span>用户123</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-content">
+      <div class="left-panel">
+        <div class="panel-header">
+          <span>自选股</span>
+          <button style="background:none;border:none;color:#1677ff;cursor:pointer;font-size:12px;">+ 添加</button>
+        </div>
+        <div class="stock-list scrollbar" id="stock-list">
+        </div>
+      </div>
+
+      <div class="center-panel">
+        <div class="stock-detail" id="stock-detail">
+          <div class="detail-left">
+            <div class="detail-name">贵州茅台</div>
+            <div class="detail-code">600519.SH</div>
+          </div>
+          <div class="detail-right">
+            <div class="current-price price-up">1,850.00</div>
+            <div class="price-change change-up">+5.20 (+0.28%)</div>
+          </div>
+        </div>
+        <div class="chart-container" id="chart-container"></div>
+      </div>
+
+      <div class="right-panel">
+        <div class="trade-panel">
+          <div class="trade-tabs">
+            <div class="trade-tab active" data-type="buy">买入</div>
+            <div class="trade-tab" data-type="sell">卖出</div>
+          </div>
+
+          <div class="trade-form">
+            <div class="form-group">
+              <label>委托价格</label>
+              <input type="number" id="order-price" placeholder="输入价格">
+              <div class="price-info">
+                <span>昨收: <span id="prev-close">1844.80</span></span>
+                <span>最高: <span id="day-high">1860.00</span></span>
+                <span>最低: <span id="day-low">1830.00</span></span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>委托数量（手）</label>
+              <input type="number" id="order-qty" placeholder="输入数量">
+              <div class="quantity-selector">
+                <button class="qty-btn">1/4</button>
+                <button class="qty-btn">1/2</button>
+                <button class="qty-btn">3/4</button>
+                <button class="qty-btn">全仓</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>委托金额</label>
+              <input type="text" id="order-amount" readonly value="0.00">
+            </div>
+
+            <button class="trade-btn buy-btn" id="submit-order">买入</button>
+          </div>
+
+          <div class="position-info">
+            <div class="position-item">
+              <span class="position-label">持仓数量</span>
+              <span class="position-value">0 股</span>
+            </div>
+            <div class="position-item">
+              <span class="position-label">持仓成本</span>
+              <span class="position-value">0.00</span>
+            </div>
+            <div class="position-item">
+              <span class="position-label">浮动盈亏</span>
+              <span class="position-value change-up">+0.00</span>
+            </div>
+            <div class="position-item">
+              <span class="position-label">可用余额</span>
+              <span class="position-value">¥ 1,000,000.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="market-status">
+        <div class="status-dot"></div>
+        <span>交易中 09:30-15:00</span>
+      </div>
+      <div>数据仅供演示，不构成投资建议</div>
+    </footer>
+  </div>
+
+  <script src="https://unpkg.com/k-chart-pro@0.2.1/dist/klinecharts-pro.umd.js"></script>
+  <script>
+    const mockStocks = [
+      { code: '600519.SH', name: '贵州茅台', price: 1850.00, change: 5.20, changePercent: 0.28 },
+      { code: '000858.SZ', name: '五粮液', price: 168.50, change: -2.30, changePercent: -1.35 },
+      { code: '601318.SH', name: '中国平安', price: 48.20, change: 0.80, changePercent: 1.68 },
+      { code: '000001.SZ', name: '平安银行', price: 12.50, change: -0.15, changePercent: -1.18 },
+      { code: '600036.SH', name: '招商银行', price: 35.80, change: 0.50, changePercent: 1.42 },
+      { code: '300750.SZ', name: '宁德时代', price: 218.60, change: 8.60, changePercent: 4.10 },
+      { code: '601398.SH', name: '工商银行', price: 5.20, change: 0.05, changePercent: 0.97 },
+      { code: '688599.SH', name: '天合光能', price: 38.90, change: -1.20, changePercent: -3.00 },
+      { code: '002594.SZ', name: '比亚迪', price: 268.00, change: 12.00, changePercent: 4.69 },
+      { code: '600030.SH', name: '中信证券', price: 28.50, change: 0.30, changePercent: 1.06 },
+    ];
+
+    const marketNames = {
+      'SH': '沪市',
+      'SZ': '深市',
+      'BJ': '北交所'
+    };
+
+    let currentStock = mockStocks[0];
+    let chartInstance = null;
+
+    function generateMockKLineData(count = 120) {
+      const data = [];
+      let basePrice = currentStock.price - 100;
+      const now = new Date();
+
+      for (let i = count; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        if (date.getDay() === 0 || date.getDay() === 6) continue;
+
+        const volatility = basePrice * 0.02;
+        const open = parseFloat((basePrice + (Math.random() - 0.5) * volatility).toFixed(2));
+        const close = parseFloat((open + (Math.random() - 0.5) * volatility).toFixed(2));
+        const high = parseFloat((Math.max(open, close) + Math.random() * volatility * 0.5).toFixed(2));
+        const low = parseFloat((Math.min(open, close) - Math.random() * volatility * 0.5).toFixed(2));
+        const volume = Math.floor(Math.random() * 50000000) + 10000000;
+
+        data.push({
+          time: date.toISOString().split('T')[0],
+          open,
+          high,
+          low,
+          close,
+          volume
+        });
+
+        basePrice = close;
+      }
+
+      return data;
+    }
+
+    function renderStockList() {
+      const list = document.getElementById('stock-list');
+      list.innerHTML = mockStocks.map(stock => {
+        const isUp = stock.change >= 0;
+        return `
+          <div class="stock-item ${stock.code === currentStock.code ? 'active' : ''}" data-code="${stock.code}">
+            <div class="stock-info">
+              <div>
+                <div class="stock-name">${stock.name}</div>
+                <div class="stock-code">${stock.code}</div>
+              </div>
+              <div class="stock-price ${isUp ? 'change-up' : 'change-down'}">
+                ${stock.price.toFixed(2)}
+              </div>
+            </div>
+            <div class="stock-change ${isUp ? 'change-up' : 'change-down'}">
+              ${isUp ? '+' : ''}${stock.change.toFixed(2)} (${isUp ? '+' : ''}${stock.changePercent.toFixed(2)}%)
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.stock-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const code = item.dataset.code;
+          const stock = mockStocks.find(s => s.code === code);
+          if (stock) {
+            switchStock(stock);
+          }
+        });
+      });
+    }
+
+    function switchStock(stock) {
+      currentStock = stock;
+      renderStockList();
+      updateStockDetail();
+      if (chartInstance) {
+        chartInstance.setSymbol({
+          ticker: stock.code,
+          name: stock.name,
+          pricePrecision: 2,
+          volumePrecision: 0
+        });
+      }
+      updateOrderPrice();
+    }
+
+    function updateStockDetail() {
+      const detail = document.getElementById('stock-detail');
+      const isUp = currentStock.change >= 0;
+
+      detail.innerHTML = `
+        <div class="detail-left">
+          <div class="detail-name">${currentStock.name}</div>
+          <div class="detail-code">${currentStock.code}</div>
+        </div>
+        <div class="detail-right">
+          <div class="current-price ${isUp ? 'price-up' : 'price-down'}">${currentStock.price.toLocaleString()}</div>
+          <div class="price-change ${isUp ? 'change-up' : 'change-down'}">${isUp ? '+' : ''}${currentStock.change.toFixed(2)} (${isUp ? '+' : ''}${currentStock.changePercent.toFixed(2)}%)</div>
+        </div>
+      `;
+    }
+
+    function updateOrderPrice() {
+      document.getElementById('order-price').value = currentStock.price.toFixed(2);
+      updateOrderAmount();
+    }
+
+    function updateOrderAmount() {
+      const price = parseFloat(document.getElementById('order-price').value) || 0;
+      const qty = parseInt(document.getElementById('order-qty').value) || 0;
+      const amount = price * qty * 100;
+      document.getElementById('order-amount').value = amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 });
+    }
+
+    class AShareDatafeed {
+      async searchSymbols(search) {
+        if (!search) return [];
+        const keyword = search.toLowerCase();
+        return mockStocks
+          .filter(stock => 
+            stock.code.toLowerCase().includes(keyword) || 
+            stock.name.includes(search)
+          )
+          .map(stock => ({
+            ticker: stock.code,
+            name: stock.name,
+            shortName: stock.name,
+            exchange: stock.code.endsWith('.SH') ? 'SSE' : 'SZSE',
+            market: stock.code.endsWith('.SH') ? 'SH' : 'SZ',
+            pricePrecision: 2,
+            volumePrecision: 0,
+            priceCurrency: 'CNY',
+            type: 'stock'
+          }));
+      }
+
+      async getHistoryKLineData(symbol, period, from, to) {
+        return generateMockKLineData();
+      }
+
+      subscribe(symbol, period, callback) {
+        this.interval = setInterval(() => {
+          const change = (Math.random() - 0.5) * 2;
+          const newPrice = parseFloat((currentStock.price + change).toFixed(2));
+          currentStock.change = parseFloat((currentStock.price - 1844.80).toFixed(2));
+          currentStock.changePercent = parseFloat(((currentStock.change / 1844.80) * 100).toFixed(2));
+          currentStock.price = newPrice;
+          updateStockDetail();
+          updateOrderPrice();
+
+          callback({
+            time: new Date().toISOString().split('T')[0],
+            open: parseFloat((newPrice - 2).toFixed(2)),
+            high: parseFloat((newPrice + 2).toFixed(2)),
+            low: parseFloat((newPrice - 2).toFixed(2)),
+            close: newPrice,
+            volume: Math.floor(Math.random() * 500000)
+          });
+        }, 3000);
+      }
+
+      unsubscribe() {
+        if (this.interval) {
+          clearInterval(this.interval);
+        }
+      }
+    }
+
+    function initChart() {
+      chartInstance = new klinechartspro.KLineChartPro({
+        container: document.getElementById('chart-container'),
+        symbol: {
+          ticker: currentStock.code,
+          name: currentStock.name,
+          pricePrecision: 2,
+          volumePrecision: 0
+        },
+        period: { multiplier: 1, timespan: 'day', text: '日K' },
+        periods: [
+          { multiplier: 1, timespan: 'minute', text: '1分钟' },
+          { multiplier: 5, timespan: 'minute', text: '5分钟' },
+          { multiplier: 30, timespan: 'minute', text: '30分钟' },
+          { multiplier: 1, timespan: 'hour', text: '1小时' },
+          { multiplier: 1, timespan: 'day', text: '日K' },
+          { multiplier: 1, timespan: 'week', text: '周K' },
+          { multiplier: 1, timespan: 'month', text: '月K' }
+        ],
+        datafeed: new AShareDatafeed(),
+        theme: 'dark',
+        locale: 'zh-CN',
+        timezone: 'Asia/Shanghai',
+        drawingBarVisible: true,
+        watermark: '© A股交易 Demo',
+        mainIndicators: ['MA'],
+        subIndicators: ['VOL', 'MACD'],
+        styles: {
+          candle: {
+            upColor: '#ef5350',
+            downColor: '#26a69a',
+            borderUpColor: '#ef5350',
+            borderDownColor: '#26a69a',
+            wickUpColor: '#ef5350',
+            wickDownColor: '#26a69a'
+          },
+          grid: {
+            vertLines: { color: 'rgba(255,255,255,0.03)' },
+            horzLines: { color: 'rgba(255,255,255,0.03)' }
+          },
+          crosshair: {
+            mode: 'magnet',
+            vertLine: { color: '#4a4a5a', style: 2 },
+            horzLine: { color: '#4a4a5a', style: 2 }
+          }
+        }
+      });
+    }
+
+    document.getElementById('search-btn').addEventListener('click', () => {
+      const keyword = document.getElementById('stock-search').value;
+      if (keyword) {
+        const stock = mockStocks.find(s => 
+          s.code.includes(keyword) || s.name.includes(keyword)
+        );
+        if (stock) {
+          switchStock(stock);
+        }
+      }
+    });
+
+    document.getElementById('stock-search').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('search-btn').click();
+      }
+    });
+
+    document.querySelectorAll('.market-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    document.querySelectorAll('.trade-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.trade-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        const btn = document.getElementById('submit-order');
+        if (tab.dataset.type === 'buy') {
+          btn.className = 'trade-btn buy-btn';
+          btn.textContent = '买入';
+        } else {
+          btn.className = 'trade-btn sell-btn';
+          btn.textContent = '卖出';
+        }
+      });
+    });
+
+    document.getElementById('order-price').addEventListener('input', updateOrderAmount);
+    document.getElementById('order-qty').addEventListener('input', updateOrderAmount);
+
+    document.querySelectorAll('.qty-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const qty = parseInt(document.getElementById('order-qty').value) || 100;
+        let newQty = qty;
+        if (btn.textContent === '1/4') newQty = Math.floor(qty / 4);
+        else if (btn.textContent === '1/2') newQty = Math.floor(qty / 2);
+        else if (btn.textContent === '3/4') newQty = Math.floor(qty * 0.75);
+        else if (btn.textContent === '全仓') newQty = Math.floor(1000000 / currentStock.price / 100);
+        
+        if (newQty > 0) {
+          document.getElementById('order-qty').value = newQty;
+          updateOrderAmount();
+        }
+      });
+    });
+
+    document.getElementById('submit-order').addEventListener('click', () => {
+      const type = document.querySelector('.trade-tab.active').dataset.type;
+      const price = document.getElementById('order-price').value;
+      const qty = document.getElementById('order-qty').value;
+
+      if (!price || !qty || parseFloat(price) <= 0 || parseInt(qty) <= 0) {
+        alert('请输入有效的价格和数量');
+        return;
+      }
+
+      alert(`${type === 'buy' ? '买入' : '卖出'}委托已提交\n股票: ${currentStock.name}\n价格: ¥${price}\n数量: ${qty}手`);
+    });
+
+    renderStockList();
+    updateStockDetail();
+    updateOrderPrice();
+    initChart();
+  </script>
+</body>
+</html>
